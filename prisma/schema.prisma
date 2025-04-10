@@ -1,15 +1,82 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Passenger {
+  id          Int       @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  passportNumber String  @unique
+  nationality String
+  email       String?
+  phone       String
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Flight {
+  id              Int       @id @default(autoincrement())
+  flightNumber    String    @unique
+  departureAirport String
+  arrivalAirport   String
+  departureTime   DateTime
+  arrivalTime     DateTime
+  aircraftType    String
+  totalSeats      Int
+  availableSeats  Int
+  bookings        Booking[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Booking {
+  id          Int       @id @default(autoincrement())
+  bookingReference String  @unique
+  passengerId Int
+  passenger   Passenger @relation(fields: [passengerId], references: [id])
+  flightId    Int
+  flight      Flight    @relation(fields: [flightId], references: [id])
+  seatNumber  String
+  bookingTime DateTime  @default(now())
+  status      BookingStatus @default(CONFIRMED)
+  staffId     Int?
+  staff       AirportStaff? @relation(fields: [staffId], references: [id])
+  paymentStatus PaymentStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([flightId, seatNumber])
+}
+
+model AirportStaff {
+  id          Int       @id @default(autoincrement())
+  employeeId  String    @unique
+  firstName   String
+  lastName    String
+  position    String
+  department  String
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  CHECKED_IN
+  BOARDED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
 }
